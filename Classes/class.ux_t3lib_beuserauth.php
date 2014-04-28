@@ -79,7 +79,6 @@ class ux_t3lib_beUserAuth extends t3lib_beUserAuth {
 					$hipChat::FORMAT_HTML
 				)
 				) {
-					die('Hat geklappt');
 				} else {
 					throw new RuntimeException(
 						'Could not send notification to HipChat Room ' . trim($extConf['hipChatDefaulRoomName']),
