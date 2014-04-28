@@ -2,10 +2,10 @@
 hipChatDefaultToken =
 
 # cat=HipChat API; type=string; label=HipChat Default Room Name: The HipChat default room name
-hipChatDefaulRoomName = TYPO3 Login Notifications
+hipChatDefaultRoomName = TYPO3 Login Notifications
 
 # cat=HipChat API; type=string; label=HipChat Default From Name: The HipChat default from name (1-15 chars)
-hipChatDefaulFromName = TYPO3 Login
+hipChatDefaultFromName = TYPO3 Login
 
 # cat=HipChat API; type=string; label=HipChat API: URL
 hipChatApiEndpoint = https://api.hipchat.com

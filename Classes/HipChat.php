@@ -260,9 +260,9 @@ class Tx_HipChat {
 	/**
 	 * Send a message to a room
 	 *
-	 * @param $roomId
-	 * @param $from
-	 * @param $message
+	 * @param String $roomId
+	 * @param String $from
+	 * @param String $message
 	 * @param bool $notify
 	 * @param string $color
 	 * @param string $messageFormat
@@ -496,7 +496,7 @@ class Tx_HipChat {
 	 */
 	public function makeRequest($apiMethod, $args = array(), $httpMethod = 'GET') {
 		$args['format'] = 'json';
-		$args['authToken'] = $this->authToken;
+		$args['auth_token'] = $this->authToken;
 		$url = $this->apiTarget . '/' . $this->apiVersion . '/' . $apiMethod;
 		$postData = NULL;
 
