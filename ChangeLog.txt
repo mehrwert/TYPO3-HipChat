@@ -1,0 +1,6 @@
+Version 1.0.0 - 2014-04-28 mehrwert <typo3@mehrwert.de>
+
+[TASK] Initial release - proof of concept
+
+* Release HipChat API extension as proof of concept for
+  TYPO3 login notifications to HipChat rooms
