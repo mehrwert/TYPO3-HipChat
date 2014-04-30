@@ -97,13 +97,45 @@ class Tx_HipChat {
 	private $extensionConfiguration = array();
 
 	/**
+	 * @var bool
+	 */
+	private $isConfigured = FALSE;
+
+	/**
+	 * @var string
+	 */
+	private $hipChatDefaultRoomName = '';
+
+	/**
+	 * @var string
+	 */
+	private $hipChatDefaultFromName = '';
+
+	/**
 	 * Creates a new API interaction object.
 	 */
 	public function __construct() {
 		$this->extensionConfiguration = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['hipchat']);
-		$this->apiTarget = $this->extensionConfiguration['hipChatApiEndpoint'];
-		$this->authToken = $this->extensionConfiguration['hipChatDefaultToken'];
-		$this->apiVersion = $this->extensionConfiguration['hipChatApiVersion'];
+		$this->apiTarget = trim($this->extensionConfiguration['hipChatApiEndpoint']);
+		$this->authToken = trim($this->extensionConfiguration['hipChatDefaultToken']);
+		$this->apiVersion = trim($this->extensionConfiguration['hipChatApiVersion']);
+		$this->hipChatDefaultRoomName = trim($this->extensionConfiguration['hipChatDefaultRoomName']);
+		$this->hipChatDefaultFromName = trim($this->extensionConfiguration['hipChatDefaultFromName']);
+		$this->checkConfiguration();
+	}
+
+	/**
+	 * Check required params
+	 * @return void
+	 */
+	private function checkConfiguration() {
+		if ( t3lib_div::isValidUrl($this->apiTarget) === TRUE
+			&& trim($this->authToken) != ''
+				&& $this->apiVersion != ''
+					&& $this->hipChatDefaultRoomName != ''
+						&& $this->hipChatDefaultFromName != '') {
+			$this->isConfigured = TRUE;
+		}
 	}
 
 	/**
@@ -111,19 +143,23 @@ class Tx_HipChat {
 	 * @return void
 	 */
 	public function hipChatLoginFailureNotification($message) {
-		if ( !$this->messageRoom(
-			trim($this->extensionConfiguration['hipChatDefaultRoomName']),
-			trim($this->extensionConfiguration['hipChatDefaultFromName']),
-			$message,
-			TRUE,
-			self::COLOR_RED,
-			self::FORMAT_HTML
-		)
-		) {
-			throw new RuntimeException(
-				'Could not send notification to HipChat Room ' . trim($this->extensionConfiguration['hipChatDefaultRoomName']),
-				1398703010
-			);
+		try {
+			if (!$this->messageRoom(
+				$this->hipChatDefaultRoomName,
+				$this->hipChatDefaultFromName,
+				$message,
+				TRUE,
+				self::COLOR_RED,
+				self::FORMAT_HTML
+			)
+			) {
+				throw new RuntimeException(
+					'Could not send notification to HipChat Room ' . $this->hipChatDefaultRoomName,
+					1398703010
+				);
+			}
+		} catch (RuntimeException $e) {
+			t3lib_div::sysLog('HipChat API error: ' . $e->getMessage(), 'hipchat', 3);
 		}
 	}
 
@@ -138,34 +174,19 @@ class Tx_HipChat {
 	 */
 	public function hipChatNotification($loginSessionStarted, $userName, $loginFailure, $formFieldUsername) {
 
-		if ($loginSessionStarted) {
-			$msg = sprintf('User "%s" logged in from %s (%s) at "%s" (%s)',
-				$userName,
-				t3lib_div::getIndpEnv('REMOTE_ADDR'),
-				t3lib_div::getIndpEnv('REMOTE_HOST'),
-				$GLOBALS['TYPO3_CONF_VARS']['SYS']['sitename'],
-				t3lib_div::getIndpEnv('HTTP_HOST')
-			);
-			if ( self::VERSION_1 == 'v1' ) {
-				if (!$this->messageRoom(
-						trim($this->extensionConfiguration['hipChatDefaultRoomName']),
-						trim($this->extensionConfiguration['hipChatDefaultFromName']),
-						$msg,
-						TRUE,
-						self::COLOR_GREEN,
-						self::FORMAT_HTML
-					)
-				) {
-					throw new RuntimeException(
-						'Could not send notification to HipChat Room ' . trim($this->extensionConfiguration['hipChatDefaultRoomName']),
-						1398703010
-					);
-				}
-			} else {
-				if ($this->roomExists(trim($this->extensionConfiguration['hipChatDefaultRoomName'])) === TRUE) {
+		try {
+			if ($loginSessionStarted) {
+				$msg = sprintf('User "%s" logged in from %s (%s) at "%s" (%s)',
+					$userName,
+					t3lib_div::getIndpEnv('REMOTE_ADDR'),
+					t3lib_div::getIndpEnv('REMOTE_HOST'),
+					$GLOBALS['TYPO3_CONF_VARS']['SYS']['sitename'],
+					t3lib_div::getIndpEnv('HTTP_HOST')
+				);
+				if ( self::VERSION_1 == 'v1' ) {
 					if (!$this->messageRoom(
-							trim($this->extensionConfiguration['hipChatDefaultRoomName']),
-							trim($this->extensionConfiguration['hipChatDefaultFromName']),
+							$this->hipChatDefaultRoomName,
+							$this->hipChatDefaultFromName,
 							$msg,
 							TRUE,
 							self::COLOR_GREEN,
@@ -173,39 +194,59 @@ class Tx_HipChat {
 						)
 					) {
 						throw new RuntimeException(
-							'Could not send notification to HipChat Room ' . trim($this->extensionConfiguration['hipChatDefaultRoomName']),
+							'Could not send notification to HipChat Room ' . $this->hipChatDefaultRoomName,
 							1398703010
 						);
 					}
 				} else {
+					if ($this->roomExists($this->hipChatDefaultRoomName) === TRUE) {
+						if (!$this->messageRoom(
+								$this->hipChatDefaultRoomName,
+								$this->hipChatDefaultFromName,
+								$msg,
+								TRUE,
+								self::COLOR_GREEN,
+								self::FORMAT_HTML
+							)
+						) {
+							throw new RuntimeException(
+								'Could not send notification to HipChat Room ' . $this->hipChatDefaultRoomName,
+								1398703010
+							);
+						}
+					} else {
+						throw new RuntimeException(
+							'HipChat Room ' . $this->hipChatDefaultRoomName .
+							' Does not exist. Can\'t proceed, sorry.',
+							1398703000
+						);
+					}
+				}
+			} elseif ($loginFailure) {
+				$msg = sprintf('Failed user login for "%s" from %s (%s) at "%s" (%s)',
+					t3lib_div::_GP($formFieldUsername),
+					t3lib_div::getIndpEnv('REMOTE_ADDR'),
+					t3lib_div::getIndpEnv('REMOTE_HOST'),
+					$GLOBALS['TYPO3_CONF_VARS']['SYS']['sitename'],
+					t3lib_div::getIndpEnv('HTTP_HOST')
+				);
+				if ( !$this->messageRoom(
+						$this->hipChatDefaultRoomName,
+						$this->hipChatDefaultFromName,
+						$msg,
+						TRUE,
+						self::COLOR_YELLOW,
+						self::FORMAT_HTML
+					)
+				) {
 					throw new RuntimeException(
-						'HipChat Room ' . trim($this->extensionConfiguration['hipChatDefaultRoomName']) . ' Does not exist. Can\'t proceed, sorry.',
-						1398703000
+						'Could not send notification to HipChat Room ' . $this->hipChatDefaultRoomName,
+						1398703010
 					);
 				}
 			}
-		} elseif ($loginFailure) {
-			$msg = sprintf('Failed user login for "%s" from %s (%s) at "%s" (%s)',
-				t3lib_div::_GP($formFieldUsername),
-				t3lib_div::getIndpEnv('REMOTE_ADDR'),
-				t3lib_div::getIndpEnv('REMOTE_HOST'),
-				$GLOBALS['TYPO3_CONF_VARS']['SYS']['sitename'],
-				t3lib_div::getIndpEnv('HTTP_HOST')
-			);
-			if ( !$this->messageRoom(
-					trim($this->extensionConfiguration['hipChatDefaultRoomName']),
-					trim($this->extensionConfiguration['hipChatDefaultFromName']),
-					$msg,
-					TRUE,
-					self::COLOR_YELLOW,
-					self::FORMAT_HTML
-				)
-			) {
-				throw new RuntimeException(
-					'Could not send notification to HipChat Room ' . trim($this->extensionConfiguration['hipChatDefaultRoomName']),
-					1398703010
-				);
-			}
+		} catch (RuntimeException $e) {
+			t3lib_div::sysLog('HipChat API error: ' . $e->getMessage(), 'hipchat', 3);
 		}
 	}
 
@@ -495,31 +536,37 @@ class Tx_HipChat {
 	 * @return mixed
 	 */
 	public function makeRequest($apiMethod, $args = array(), $httpMethod = 'GET') {
-		$args['format'] = 'json';
-		$args['auth_token'] = $this->authToken;
-		$url = $this->apiTarget . '/' . $this->apiVersion . '/' . $apiMethod;
-		$postData = NULL;
+		$response = FALSE;
+		if ($this->isConfigured === TRUE) {
+			$args['format'] = 'json';
+			$args['auth_token'] = $this->authToken;
+			$url = $this->apiTarget . '/' . $this->apiVersion . '/' . $apiMethod;
+			$postData = NULL;
 
-		// add args to url for GET
-		if ($httpMethod == 'GET') {
-			$url .= '?' . http_build_query($args);
-		} else {
-			$postData = $args;
+			// add args to url for GET
+			if ($httpMethod == 'GET') {
+				$url .= '?' . http_build_query($args);
+			} else {
+				$postData = $args;
+			}
+
+			try {
+				$response = $this->curlRequest($url, $postData);
+
+				// make sure response is valid json
+				$response = json_decode($response);
+				if (!$response) {
+					throw new Tx_HipChat_Exception(
+						self::STATUS_BAD_RESPONSE,
+						'Invalid JSON received: ' . $response,
+						NULL,
+						$url
+					);
+				}
+			} catch (Tx_HipChat_Exception $e) {
+				t3lib_div::sysLog('HipChat API error: ' . $e->getMessage(), 'hipchat', 3);
+			}
 		}
-
-		$response = $this->curlRequest($url, $postData);
-
-		// make sure response is valid json
-		$response = json_decode($response);
-		if (!$response) {
-			throw new Tx_HipChat_Exception(
-				self::STATUS_BAD_RESPONSE,
-				'Invalid JSON received: ' . $response,
-				NULL,
-				$url
-			);
-		}
-
 		return $response;
 	}
 
