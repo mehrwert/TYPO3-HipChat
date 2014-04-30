@@ -3,6 +3,9 @@ Send login or login error notifications from TYPO3 to HipCHat and provide a coll
 
 ## Version History
 
+### Version 1.0.3 - 2014-04-30
+* TER release
+
 ### Version 1.0.2 - 2014-04-30
 * Initial public release
 
@@ -14,6 +17,11 @@ Send login or login error notifications from TYPO3 to HipCHat and provide a coll
 * Initial release
 
 ## Planned features & ideas
-* HipChat calls for System Status Notifications (for tx_reports_tasks_SystemStatusUpdateTask)
-* Install-Tool login notifications and errors
-* FE User Login Notification
+* Add compatibility for TYPO3 6.x
+* Add HipChat calls for »System Status Notifications« (for tx_reports_tasks_SystemStatusUpdateTask)
+* Add Install-Tool login notifications and errors
+* Add FE User login notification
+* Add option to disable email notification
+* Add configuration option for rooms and from names
+
+## Known issues & to do
