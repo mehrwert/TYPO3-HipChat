@@ -1,6 +1,19 @@
+Version 1.0.2 - 2014-04-30 mehrwert <typo3@mehrwert.de>
+
+[TASK] Initial public release
+
+
+
+Version 1.0.1 - 2014-04-30 mehrwert <typo3@mehrwert.de>
+
+[TASK] Add support and compatibility for 4.5 and code cleanup
+* Add XCLASS for TYPO3 4.5-LTS
+* Code review & cleanup
+
+
+
 Version 1.0.0 - 2014-04-28 mehrwert <typo3@mehrwert.de>
 
 [TASK] Initial release - proof of concept
-
 * Release HipChat API extension as proof of concept for
   TYPO3 login notifications to HipChat rooms

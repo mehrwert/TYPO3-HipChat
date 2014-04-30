@@ -117,7 +117,7 @@ class Tx_HipChat {
 	public function __construct() {
 		$this->extensionConfiguration = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['hipchat']);
 		$this->apiTarget = trim($this->extensionConfiguration['hipChatApiEndpoint']);
-		$this->authToken = trim($this->extensionConfiguration['hipChatDefaultToken']);
+		$this->authToken = trim($this->extensionConfiguration['hipChatDefaultApiToken']);
 		$this->apiVersion = trim($this->extensionConfiguration['hipChatApiVersion']);
 		$this->hipChatDefaultRoomName = trim($this->extensionConfiguration['hipChatDefaultRoomName']);
 		$this->hipChatDefaultFromName = trim($this->extensionConfiguration['hipChatDefaultFromName']);
