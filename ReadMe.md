@@ -1,5 +1,9 @@
 # Atlassian HipChat Notification & API Services
-Send login or login error notifications from TYPO3 to HipCHat and provide a collection of HipChat API methods
+
+The »Atlassian HipChat Notification & API Services« provides an API to the HipChat Rest-Webservices (v1).
+It should replace the login emails sent by the TYPO3 Install-Tool, the TYPO3 Backend on logins or the
+cumulated login error notifications. The public API could be also used to provide HipChat notifications
+in your own extension.
 
 ## Version History
 
