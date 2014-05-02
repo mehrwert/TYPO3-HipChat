@@ -7,6 +7,12 @@ in your own extension.
 
 ## Version History
 
+### Version 1.1.0 - 2014-05-02
+* TER release - add compatibility for TYPO3 6.2
+
+### Version 1.0.4 - 2014-05-02
+* TER release - add ReadMe.rst reST file
+
 ### Version 1.0.3 - 2014-04-30
 * TER release
 
