@@ -27,7 +27,9 @@
  ***************************************************************/
 
 /**
- * XCLASS for T3lib BE User Auth for tx_hipchat Extension
+ * XCLASS for T3lib BE User Auth for tx_hipchat Extension. Changes
+ * the methods backendCheckLogin() and checkLogFailures() and adds
+ * HipCht methods.
  *
  * @author		mehrwert <typo3@mehrwert.de>
  * @package		TYPO3

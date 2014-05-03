@@ -1,5 +1,7 @@
 Version 1.1.0 - 2014-05-02 mehrwert <typo3@mehrwert.de>
-[TASK] Add compatibility for TYPO3 6.2
+[FEATURE] Add compatibility for TYPO3 6.2
+* Add class for TYPO3 6.2
+* Add reST documentation and clean up and restructure existing files
 
 
 Version 1.0.4 - 2014-05-02 mehrwert <typo3@mehrwert.de>

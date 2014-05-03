@@ -1,14 +1,14 @@
-# cat=HipChat API; type=string; label=HipChat Token: The default HipChat API-token
+# cat=HipChat API; type=string; label=API Token: The default HipChat API-token to access the Rest API
 hipChatDefaultApiToken =
 
-# cat=HipChat API; type=string; label=HipChat Default Room Name: The HipChat default room name to post messages to
+# cat=HipChat API; type=string; label=Default Room Name: The default room name to post HipChat messages to
 hipChatDefaultRoomName = TYPO3 Login Notifications
 
-# cat=HipChat API; type=string; label=HipChat Default From Name: The HipChat default from name (1-15 chars)
+# cat=HipChat API; type=string; label=Default From Name: The from name used in notifications (1-15 chars)
 hipChatDefaultFromName = TYPO3 Login
 
-# cat=HipChat API; type=string; label=HipChat API: URL
+# cat=HipChat API; type=string; label=API URL: The HipChat-Rest-API URL
 hipChatApiEndpoint = https://api.hipchat.com
 
-# cat=HipChat API; type=string; label=HipChat API Version: v1
+# cat=HipChat API; type=string; label=API Version: HipChat API version to use (defaults to v1)
 hipChatApiVersion = v1
