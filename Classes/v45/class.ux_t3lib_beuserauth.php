@@ -84,8 +84,11 @@ class ux_t3lib_beUserAuth extends t3lib_beUserAuth {
 
 		$message = '';
 
+		$hipChatConfiguration = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['hipchat']);
+		$hipChatNotificationTransport = intval($hipChatConfiguration['hipChatNotificationTransport']);
+
 		if (!$this->user['uid']) {
-			if ($this->loginFailure) {
+			if ($this->loginFailure && $hipChatNotificationTransport >= HIPCHAT_NOTIFICATION_TRANSPORT_HIPCHAT_AND_EMAIL) {
 				$this->hipChatLoginFailureNotification($message);
 			}
 			if (!defined('TYPO3_PROCEED_IF_NO_USER') || !TYPO3_PROCEED_IF_NO_USER) {
@@ -93,9 +96,11 @@ class ux_t3lib_beUserAuth extends t3lib_beUserAuth {
 			}
 			// ...and if that's the case, call these functions
 		} else {
-			// The groups are fetched and ready for permission checking in this
-			// initialization. Tables.php must be read before this because stuff
-			// like the modules has impact in this
+			/**
+			 * The groups are fetched and ready for permission checking in this
+			 * initialization. Tables.php must be read before this because stuff
+			 * like the modules has impact in this
+			 */
 			$this->fetchGroupData();
 			if ($this->checkLockToIP()) {
 				if ($this->isUserAllowedToLogin()) {
@@ -103,9 +108,13 @@ class ux_t3lib_beUserAuth extends t3lib_beUserAuth {
 					// due to default/overriding of values.
 					$this->backendSetUC();
 					// email at login - if option set.
-					$this->emailAtLogin();
+					if ($hipChatNotificationTransport <= HIPCHAT_NOTIFICATION_TRANSPORT_HIPCHAT_AND_EMAIL) {
+						$this->emailAtLogin();
+					}
 					// HipChat Notification
-					$this->hipChatLoginNotification();
+					if ($hipChatNotificationTransport >= HIPCHAT_NOTIFICATION_TRANSPORT_HIPCHAT_AND_EMAIL) {
+						$this->hipChatLoginNotification();
+					}
 				} else {
 					throw new RuntimeException(
 						'Login Error: TYPO3 is in maintenance mode at the moment. Only administrators are allowed access.',
@@ -138,6 +147,8 @@ class ux_t3lib_beUserAuth extends t3lib_beUserAuth {
 	public function checkLogFailures($email, $secondsBack = 3600, $max = 3) {
 
 		$hipChatMsg = '';
+		$hipChatConfiguration = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['hipchat']);
+		$hipChatNotificationTransport = intval($hipChatConfiguration['hipChatNotificationTransport']);
 
 		// get last flag set in the log for sending
 		$theTimeBack = $GLOBALS['EXEC_TIME'] - $secondsBack;
@@ -185,7 +196,7 @@ class ux_t3lib_beUserAuth extends t3lib_beUserAuth {
 			}
 			$hipChatMsg .= '</ul>';
 
-			if ($email) {
+			if ($email && $hipChatNotificationTransport <= HIPCHAT_NOTIFICATION_TRANSPORT_HIPCHAT_AND_EMAIL) {
 				$from = t3lib_utility_Mail::getSystemFrom();
 				/** @var $mail t3lib_mail_Message */
 				$mail = t3lib_div::makeInstance('t3lib_mail_Message');
@@ -210,7 +221,7 @@ class ux_t3lib_beUserAuth extends t3lib_beUserAuth {
 			}
 		}
 
-		if ( trim($hipChatMsg) != '' ) {
+		if ( trim($hipChatMsg) != '' && $hipChatNotificationTransport >= HIPCHAT_NOTIFICATION_TRANSPORT_HIPCHAT_AND_EMAIL ) {
 			$this->hipChatLoginFailureNotification($hipChatMsg);
 		}
 

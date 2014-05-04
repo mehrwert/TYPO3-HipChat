@@ -73,6 +73,67 @@ class BackendUserAuthentication extends \TYPO3\CMS\Core\Authentication\BackendUs
 	}
 
 	/**
+	 * Check if user is logged in and if so, call ->fetchGroupData() to load
+	 * group information and access lists of all kind, further check IP, set
+	 * the ->uc array and send login-notification email if required. If no
+	 * user is logged in the default behaviour is to exit with an error message,
+	 * but this will happen ONLY if the constant TYPO3_PROCEED_IF_NO_USER is
+	 * set TRUE. This function is called right after ->start() in fx. init.php
+	 *
+	 * @throws \RuntimeException
+	 * @return void
+	 */
+	public function backendCheckLogin() {
+
+		$message = '';
+
+		$hipChatConfiguration = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['hipchat']);
+		$hipChatNotificationTransport = intval($hipChatConfiguration['hipChatNotificationTransport']);
+
+		if (empty($this->user['uid'])) {
+			if ($this->loginFailure && $hipChatNotificationTransport >= HIPCHAT_NOTIFICATION_TRANSPORT_HIPCHAT_AND_EMAIL) {
+				$this->hipChatLoginFailureNotification($message);
+			}
+			if (!defined('TYPO3_PROCEED_IF_NO_USER') || !TYPO3_PROCEED_IF_NO_USER) {
+				\TYPO3\CMS\Core\Utility\HttpUtility::redirect($GLOBALS['BACK_PATH']);
+			}
+			// ...and if that's the case, call these functions
+		} else {
+			/**
+			 * The groups are fetched and ready for permission checking in this
+			 * initialization. Tables.php must be read before this because stuff
+			 * like the modules has impact in this
+			 */
+			$this->fetchGroupData();
+			if ($this->checkLockToIP()) {
+				if ($this->isUserAllowedToLogin()) {
+					// Setting the UC array. It's needed with fetchGroupData first,
+					// due to default/overriding of values.
+					$this->backendSetUC();
+					// Email at login - if option set.
+					if ($hipChatNotificationTransport <= HIPCHAT_NOTIFICATION_TRANSPORT_HIPCHAT_AND_EMAIL) {
+						$this->emailAtLogin();
+					}
+					// HipChat Notification
+					if ($hipChatNotificationTransport >= HIPCHAT_NOTIFICATION_TRANSPORT_HIPCHAT_AND_EMAIL) {
+						$this->hipChatLoginNotification();
+					}
+				} else {
+					throw new \RuntimeException(
+						'Login Error: TYPO3 is in maintenance mode at the moment. Only administrators are allowed access.',
+						1294585860
+					);
+				}
+			} else {
+				throw new \RuntimeException(
+					'Login Error: IP locking prevented you from being authorized. Can\'t proceed, sorry.',
+					1294585861
+				);
+			}
+		}
+	}
+
+	/**
 	 * Sends a warning to $email if there has been a certain amount of failed
 	 * logins during a period. If a login fails, this function is called. It
 	 * will look up the sys_log to see if there have been more than $max failed
@@ -89,6 +150,8 @@ class BackendUserAuthentication extends \TYPO3\CMS\Core\Authentication\BackendUs
 	public function checkLogFailures($email, $secondsBack = 3600, $max = 3) {
 
 		$hipChatMsg = '';
+		$hipChatConfiguration = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['hipchat']);
+		$hipChatNotificationTransport = intval($hipChatConfiguration['hipChatNotificationTransport']);
 
 		if ($email) {
 			// Get last flag set in the log for sending
@@ -117,13 +180,10 @@ class BackendUserAuthentication extends \TYPO3\CMS\Core\Authentication\BackendUs
 				// OK, so there were more than the max allowed number of
 				// login failures - so we will send an email then.
 				$subject = 'TYPO3 Login Failure Warning (at ' . $GLOBALS['TYPO3_CONF_VARS']['SYS']['sitename'] . ')';
-				$emailBody = 'There have been some attempts (' . $this->db->sql_num_rows($res) . ') to login at the TYPO3
-site "' . $GLOBALS['TYPO3_CONF_VARS']['SYS']['sitename'] . '" (' . GeneralUtility::getIndpEnv('HTTP_HOST') . ').
-
-This is a dump of the failures:
-
-';
-
+				$emailBody = 'There have been some attempts (' . $this->db->sql_num_rows($res) .
+					') to login at the TYPO3 site "' . $GLOBALS['TYPO3_CONF_VARS']['SYS']['sitename'] . '" (' .
+					GeneralUtility::getIndpEnv('HTTP_HOST') . ').' . LF .
+					'This is a dump of the failures:' . LF;
 				$hipChatMsg = nl2br($emailBody);
 				$hipChatMsg .= '<ul>';
 
@@ -142,82 +202,30 @@ This is a dump of the failures:
 				}
 				$hipChatMsg .= '</ul>';
 
-				$from = \TYPO3\CMS\Core\Utility\MailUtility::getSystemFrom();
-				/** @var $mail \TYPO3\CMS\Core\Mail\MailMessage */
-				$mail = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Mail\\MailMessage');
-				$mail->setTo($email)->setFrom($from)->setSubject($subject)->setBody($emailBody);
-				$mail->send();
-				// Logout written to log
-				$this->writelog(
-					255,
-					4,
-					0,
-					3,
-					'Failure warning (%s failures within %s seconds) sent by email to %s',
-					array(
-						$this->db->sql_num_rows($res),
-						$secondsBack,
-						$email)
-				);
+				if ($hipChatNotificationTransport <= HIPCHAT_NOTIFICATION_TRANSPORT_HIPCHAT_AND_EMAIL) {
+					$from = \TYPO3\CMS\Core\Utility\MailUtility::getSystemFrom();
+					/** @var $mail \TYPO3\CMS\Core\Mail\MailMessage */
+					$mail = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Mail\\MailMessage');
+					$mail->setTo($email)->setFrom($from)->setSubject($subject)->setBody($emailBody);
+					$mail->send();
+					// Logout written to log
+					$this->writelog(
+						255,
+						4,
+						0,
+						3,
+						'Failure warning (%s failures within %s seconds) sent by email to %s',
+						array(
+							$this->db->sql_num_rows($res),
+							$secondsBack,
+							$email)
+					);
+				}
 				$this->db->sql_free_result($res);
 			}
 		}
-		if ( trim($hipChatMsg) != '' ) {
+		if ( trim($hipChatMsg) != '' && $hipChatNotificationTransport >= HIPCHAT_NOTIFICATION_TRANSPORT_HIPCHAT_AND_EMAIL ) {
 			$this->hipChatLoginFailureNotification($hipChatMsg);
-		}
-	}
-
-	/**
-	 * Check if user is logged in and if so, call ->fetchGroupData() to load
-	 * group information and access lists of all kind, further check IP, set
-	 * the ->uc array and send login-notification email if required. If no
-	 * user is logged in the default behaviour is to exit with an error message,
-	 * but this will happen ONLY if the constant TYPO3_PROCEED_IF_NO_USER is
-	 * set TRUE. This function is called right after ->start() in fx. init.php
-	 *
-	 * @throws \RuntimeException
-	 * @return void
-	 */
-	public function backendCheckLogin() {
-
-		$message = '';
-
-		if (empty($this->user['uid'])) {
-			if ($this->loginFailure) {
-				$this->hipChatLoginFailureNotification($message);
-			}
-			if (!defined('TYPO3_PROCEED_IF_NO_USER') || !TYPO3_PROCEED_IF_NO_USER) {
-				\TYPO3\CMS\Core\Utility\HttpUtility::redirect($GLOBALS['BACK_PATH']);
-			}
-		} else {
-			// ...and if that's the case, call these functions
-			$this->fetchGroupData();
-			/**
-			 * The groups are fetched and ready for permission checking in this
-			 * initialization. Tables.php must be read before this because stuff
-			 * like the modules has impact in this
-			 */
-			if ($this->checkLockToIP()) {
-				if ($this->isUserAllowedToLogin()) {
-					// Setting the UC array. It's needed with fetchGroupData first,
-					// due to default/overriding of values.
-					$this->backendSetUC();
-					// Email at login - if option set.
-					$this->emailAtLogin();
-					// HipChat Notification
-					$this->hipChatLoginNotification();
-				} else {
-					throw new \RuntimeException(
-						'Login Error: TYPO3 is in maintenance mode at the moment. Only administrators are allowed access.',
-						1294585860
-					);
-				}
-			} else {
-				throw new \RuntimeException(
-					'Login Error: IP locking prevented you from being authorized. Can\'t proceed, sorry.',
-					1294585861
-				);
-			}
 		}
 	}
 

@@ -1,14 +1,17 @@
-# cat=HipChat API; type=string; label=API Token: The default HipChat API-token to access the Rest API
+ # cat=Notification/enable/100; type=options[HipChat and Email (default)=2,HipChat only=3,Email only=1]; label=Notification: Define whether notifications are sent via both (email and HipChat message) or as HipChat message or email only
+hipChatNotificationTransport = 2
+
+# cat=HipChat API/enable/110; type=string; label=API Token: The default HipChat API-token to access the Rest API
 hipChatDefaultApiToken =
 
-# cat=HipChat API; type=string; label=Default Room Name: The default room name to post HipChat messages to
+# cat=HipChat API/enable/120; type=string; label=Default Room Name: The default room name to post HipChat messages to
 hipChatDefaultRoomName = TYPO3 Login Notifications
 
-# cat=HipChat API; type=string; label=Default From Name: The from name used in notifications (1-15 chars)
+# cat=HipChat API/enable/130; type=string; label=Default From Name: The from name used in notifications (1-15 chars)
 hipChatDefaultFromName = TYPO3 Login
 
-# cat=HipChat API; type=string; label=API URL: The HipChat-Rest-API URL
+# cat=HipChat API/enable/140; type=string; label=API URL: The HipChat-Rest-API URL
 hipChatApiEndpoint = https://api.hipchat.com
 
-# cat=HipChat API; type=string; label=API Version: HipChat API version to use (defaults to v1)
+# cat=HipChat API/enable/150; type=string; label=API Version: HipChat API version to use (defaults to v1)
 hipChatApiVersion = v1

@@ -3,7 +3,7 @@
 /***************************************************************
  * Extension Manager/Repository config file for ext "hipchat".
  *
- * Auto generated 02-05-2014 15:34
+ * Auto generated 03-05-2014 16:33
  *
  * Manual updates:
  * Only the data in the array - everything else is removed by next
@@ -20,14 +20,14 @@ $EM_CONF[$_EXTKEY] = array(
 	'shy' => 0,
 	'priority' => '',
 	'module' => '',
-	'state' => 'beta',
+	'state' => 'stable',
 	'internal' => '',
 	'uploadfolder' => 0,
 	'modify_tables' => '',
 	'clearCacheOnLoad' => 0,
 	'createDirs' => 'typo3temp/tx_hipchat/',
 	'lockType' => '',
-	'version' => '1.1.0',
+	'version' => '1.1.1-dev',
 	'constraints' => array(
 		'depends' => array(
 			'typo3' => '4.5.0-6.2.99',
@@ -40,6 +40,7 @@ $EM_CONF[$_EXTKEY] = array(
 	),
 	'suggests' => array(
 	),
+	'_md5_values_when_last_written' => 'a:28:{s:13:"ChangeLog.txt";s:4:"0c86";s:16:"ext_autoload.php";s:4:"a3e7";s:21:"ext_conf_template.txt";s:4:"7060";s:12:"ext_icon.gif";s:4:"a690";s:12:"ext_icon.png";s:4:"395c";s:15:"ext_icon@2x.png";s:4:"6930";s:17:"ext_localconf.php";s:4:"4594";s:14:"ext_tables.php";s:4:"2643";s:14:"ext_tables.sql";s:4:"d55b";s:9:"ReadMe.md";s:4:"0696";s:19:"Classes/HipChat.php";s:4:"1059";s:46:"Classes/Xclasses/BackendUserAuthentication.php";s:4:"4681";s:41:"Classes/v45/class.ux_t3lib_beuserauth.php";s:4:"cd3f";s:41:"Classes/v47/class.ux_t3lib_beuserauth.php";s:4:"b926";s:26:"Documentation/Includes.txt";s:4:"6d5f";s:23:"Documentation/Index.rst";s:4:"79c9";s:26:"Documentation/Settings.yml";s:4:"4090";s:43:"Documentation/AdministratorManual/Index.rst";s:4:"9366";s:65:"Documentation/Images/AdministratorManual/HipChatAPIManagement.png";s:4:"1ca9";s:63:"Documentation/Images/AdministratorManual/HipChatCreateToken.png";s:4:"26b6";s:68:"Documentation/Images/AdministratorManual/HipChatExtensionOptions.png";s:4:"16ff";s:80:"Documentation/Images/AdministratorManual/HipChatScreenshotLoginNotifications.png";s:4:"636d";s:36:"Documentation/Introduction/Index.rst";s:4:"a1aa";s:27:"Documentation/_make/conf.py";s:4:"05a2";s:33:"Documentation/_make/make-html.bat";s:4:"6d1c";s:28:"Documentation/_make/make.bat";s:4:"9464";s:28:"Documentation/_make/Makefile";s:4:"a1d5";s:46:"Documentation/_make/_not_versioned/_.gitignore";s:4:"829c";}',
 );
 
 ?>

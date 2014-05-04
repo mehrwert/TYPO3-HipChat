@@ -12,6 +12,11 @@ if (!defined ('TYPO3_MODE')) {
 	die ('Access denied.');
 }
 
+// Define the notification transport
+define('HIPCHAT_NOTIFICATION_TRANSPORT_EMAIL', 1);
+define('HIPCHAT_NOTIFICATION_TRANSPORT_HIPCHAT_AND_EMAIL', 2);
+define('HIPCHAT_NOTIFICATION_TRANSPORT_HIPCHAT', 3);
+
 $_EXTCONF = unserialize($_EXTCONF);
 
 // Include classes for TYPO3 4.5

@@ -49,9 +49,17 @@ and the name must be exactly the same as in HipChat. Choose a »from« name. Log
 
 .. figure:: ../Images/AdministratorManual/HipChatExtensionOptions.png
 	:width: 800px
-	:alt: Extension Manager Options
+	:alt: Extension Options
 
-	Extension Manager Options for HipChat - fill with your values
+	Extension Options for HipChat - fill with your values
+
+In the **Notification** tab you may choose the desired way of notification tranmission. Choose email (disables HipChat notifications), HipChat and email notifications (default), or HipChat only to disable email notification.
+
+.. figure:: ../Images/AdministratorManual/HipChatExtensionNotificationOptions.png
+	:width: 800px
+	:alt: Extension Notification Options
+
+	Extension Notification Options for HipChat - select your desired way of notification
 
 
 Example Notifications
