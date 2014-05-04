@@ -5,6 +5,8 @@ It should replace the login emails sent by the TYPO3 Install-Tool, the TYPO3 Bac
 cumulated login error notifications. The public API could be also used to provide HipChat notifications
 in your own extension.
 
+Atlassian HipChat provides private group chat and IM services - see https://www.hipchat.com/
+
 ## Features
 * Basic Login notification
 * Compatibility for TYPO3 4.5-LTS, 4.7 and 6.2-LTS

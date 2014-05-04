@@ -1,6 +1,6 @@
 # Change log for TYPO3 HipChat extension
 
-## Version 1.1.1-dev - 2014-05-04
+## Version 1.1.1 - 2014-05-04
 [FEATURE] Add configuration option for notification transmission channel
 
 * Add configuration value hipChatNotificationTransport to the extension
