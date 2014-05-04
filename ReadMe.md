@@ -13,7 +13,6 @@ in your own extension.
 * Add HipChat calls for »System Status Notifications« (for tx_reports_tasks_SystemStatusUpdateTask)
 * Add Install-Tool login notifications and errors
 * Add FE User login notification
-* Add option to disable email notification
 * Add configuration option for rooms and from names
 * Different rooms by message severity
 
@@ -23,5 +22,5 @@ in your own extension.
 ## Version History
 For full history please see ChangeLog.txt.
 
-### Whats new in this release (Version 1.1.0 - 2014-05-02)
-* TER release - add compatibility for TYPO3 6.2
+### Whats new in this release (Version 1.1.1 - 2014-05-04)
+* Add configuration option for notification transmission channel

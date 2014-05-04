@@ -1,3 +1,14 @@
+Version 1.1.1-dev - 2014-05-04 mehrwert <typo3@mehrwert.de>
+[FEATURE] Add configuration option for notification transmission channel
+
+* Add configuration value hipChatNotificationTransport to the extension
+  configuration to provide an option to select the desired notification
+  transport: both (email and HipChat message), HipChat message only,
+  email only (defaults to email and HipChat).
+
+* Further code cleanup and unification (CGL, order).
+
+
 Version 1.1.0 - 2014-05-02 mehrwert <typo3@mehrwert.de>
 [FEATURE] Add compatibility for TYPO3 6.2
 * Add class for TYPO3 6.2
