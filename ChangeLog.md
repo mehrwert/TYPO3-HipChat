@@ -1,5 +1,8 @@
 # Change log for TYPO3 HipChat extension
 
+## Version 1.1.2 - 2014-05-06
+[CHANGE] Add support for curl proxy settings configured in the TYPO3 install tool
+
 ## Version 1.1.1 - 2014-05-04
 [FEATURE] Add configuration option for notification transmission channel
 
