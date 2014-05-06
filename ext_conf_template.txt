@@ -15,3 +15,6 @@ hipChatApiEndpoint = https://api.hipchat.com
 
 # cat=HipChat API/enable/150; type=string; label=API Version: HipChat API version to use (defaults to v1)
 hipChatApiVersion = v1
+
+# cat=HipChat API/enable/150; type=boolean; label=Verify SSL certificates: Only for TYPO3 < 6.2: Disable when curl spits back SSL verification errors (most likely due to outdated SSL CA bundle file on server. If you are able to, update that CA bundle!). In TYPO3 6.2 uses [HTTP][ssl_verify_peer] value from the Install Tool.
+hipChatCurlVerifySsl = 1

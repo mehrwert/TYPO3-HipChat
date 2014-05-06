@@ -89,11 +89,6 @@ class Tx_HipChat {
 	/**
 	 * @var
 	 */
-	private $proxy;
-
-	/**
-	 * @var
-	 */
 	private $extensionConfiguration = array();
 
 	/**
@@ -112,7 +107,8 @@ class Tx_HipChat {
 	private $hipChatDefaultFromName = '';
 
 	/**
-	 * Creates a new API interaction object.
+	 * Class constructor. Creates a new API interaction
+	 * object and sets the class configuration.
 	 */
 	public function __construct() {
 		$this->extensionConfiguration = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['hipchat']);
@@ -121,12 +117,16 @@ class Tx_HipChat {
 		$this->apiVersion = trim($this->extensionConfiguration['hipChatApiVersion']);
 		$this->hipChatDefaultRoomName = trim($this->extensionConfiguration['hipChatDefaultRoomName']);
 		$this->hipChatDefaultFromName = trim($this->extensionConfiguration['hipChatDefaultFromName']);
+		$this->setVerifySsl( intval($this->extensionConfiguration['hipChatCurlVerifySsl']) === 1 ? TRUE : FALSE );
 		$this->checkConfiguration();
 	}
 
 	/**
-	 * Check required params
+	 * Check required HipChat API params and set class variable
+	 * isConfigured to TRUE or FALSE
+	 *
 	 * @return void
+	 * @see ->isConfigured
 	 */
 	private function checkConfiguration() {
 		if ( t3lib_div::isValidUrl($this->apiTarget) === TRUE
@@ -139,22 +139,31 @@ class Tx_HipChat {
 	}
 
 	/**
+	 * Create and send a login failure notification to HipChat room
+	 *
 	 * @param String $message The message to post to HipChat
 	 * @return void
 	 */
 	public function hipChatLoginFailureNotification($message) {
 		try {
-			if (!$this->messageRoom(
-				$this->hipChatDefaultRoomName,
-				$this->hipChatDefaultFromName,
-				$message,
-				TRUE,
-				self::COLOR_RED,
-				self::FORMAT_HTML
-			)
-			) {
+			if ( trim($message) != '' ) {
+				if (!$this->messageRoom(
+						$this->hipChatDefaultRoomName,
+						$this->hipChatDefaultFromName,
+						$message,
+						TRUE,
+						self::COLOR_RED,
+						self::FORMAT_HTML
+					)
+				) {
+					throw new RuntimeException(
+						'Could not send notification to HipChat Room ' . $this->hipChatDefaultRoomName,
+						1398703010
+					);
+				}
+			} else {
 				throw new RuntimeException(
-					'Could not send notification to HipChat Room ' . $this->hipChatDefaultRoomName,
+					'Empty message. No notification submitted.',
 					1398703010
 				);
 			}
@@ -164,6 +173,8 @@ class Tx_HipChat {
 	}
 
 	/**
+	 * Create and send a login notification to HipChat room
+	 *
 	 * @param Boolean $loginSessionStarted
 	 * @param String $userName
 	 * @param Boolean $loginFailure
@@ -184,22 +195,7 @@ class Tx_HipChat {
 					t3lib_div::getIndpEnv('HTTP_HOST')
 				);
 				if ( self::VERSION_1 == 'v1' ) {
-					if (!$this->messageRoom(
-							$this->hipChatDefaultRoomName,
-							$this->hipChatDefaultFromName,
-							$msg,
-							TRUE,
-							self::COLOR_GREEN,
-							self::FORMAT_HTML
-						)
-					) {
-						throw new RuntimeException(
-							'Could not send notification to HipChat Room ' . $this->hipChatDefaultRoomName,
-							1398703010
-						);
-					}
-				} else {
-					if ($this->roomExists($this->hipChatDefaultRoomName) === TRUE) {
+					if ( trim($msg) != '' ) {
 						if (!$this->messageRoom(
 								$this->hipChatDefaultRoomName,
 								$this->hipChatDefaultFromName,
@@ -211,6 +207,35 @@ class Tx_HipChat {
 						) {
 							throw new RuntimeException(
 								'Could not send notification to HipChat Room ' . $this->hipChatDefaultRoomName,
+								1398703010
+							);
+						}
+					} else {
+						throw new RuntimeException(
+							'Empty message. No notification submitted.',
+							1398703010
+						);
+					}
+				} else {
+					if ($this->roomExists($this->hipChatDefaultRoomName) === TRUE) {
+						if ( trim($msg) != '' ) {
+							if (!$this->messageRoom(
+									$this->hipChatDefaultRoomName,
+									$this->hipChatDefaultFromName,
+									$msg,
+									TRUE,
+									self::COLOR_GREEN,
+									self::FORMAT_HTML
+								)
+							) {
+								throw new RuntimeException(
+									'Could not send notification to HipChat Room ' . $this->hipChatDefaultRoomName,
+									1398703010
+								);
+							}
+						} else {
+							throw new RuntimeException(
+								'Empty message. No notification submitted.',
 								1398703010
 							);
 						}
@@ -462,47 +487,88 @@ class Tx_HipChat {
 	 *
 	 * @param String $url URL to hit.
 	 * @param Array $postData Data to send via POST. Leave null for GET request.
+	 * @return String
+	 * @throws UnexpectedValueException
 	 * @throws Tx_HipChat_Exception
-	 * @return string
 	 */
-	public function curlRequest($url, $postData = NULL) {
+	private function hipChatRequest($url, $postData = NULL) {
 
 		if (is_array($postData)) {
 			$postData = array_map(array($this, 'sanitizeCurlParameter'), $postData);
 		}
 
-		$ch = curl_init($url);
-		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $this->verifySsl);
-		if (isset($this->proxy)) {
-			curl_setopt($ch, CURLOPT_HTTPPROXYTUNNEL, 1);
-			curl_setopt($ch, CURLOPT_PROXY, $this->proxy);
+		$versionParts = explode('.', TYPO3_version);
+		$versionNumber = intval((int) $versionParts[0] .
+			str_pad((int) $versionParts[1], 3, '0', STR_PAD_LEFT) .
+			str_pad((int) $versionParts[2], 3, '0', STR_PAD_LEFT)
+		);
+		if ( $versionNumber < 6002000 ) {
+			$curlTimeout = intval($GLOBALS['TYPO3_CONF_VARS']['SYS']['curlTimeout']);
+			$curlProxyUserPass = trim($GLOBALS['TYPO3_CONF_VARS']['SYS']['curlProxyUserPass']);
+			$curlProxyTunnel = intval($GLOBALS['TYPO3_CONF_VARS']['SYS']['curlProxyTunnel']);
+			$sslVerifyPeer = $this->verifySsl;
+			$followRedirects = 1;
+			$useCurl = ( intval($GLOBALS['TYPO3_CONF_VARS']['SYS']['curlUse']) === 1 ? TRUE : FALSE );
+			$curlProxyServer = trim($GLOBALS['TYPO3_CONF_VARS']['SYS']['curlProxyServer']);
+		} else {
+			$curlTimeout = intval($GLOBALS['TYPO3_CONF_VARS']['HTTP']['timeout']);
+			$sslVerifyPeer = intval($GLOBALS['TYPO3_CONF_VARS']['HTTP']['ssl_verify_peer']);
+			$followRedirects = intval($GLOBALS['TYPO3_CONF_VARS']['HTTP']['follow_redirects']);
+			$useCurl = ( trim($GLOBALS['TYPO3_CONF_VARS']['HTTP']['adapter']) === 'curl' ? TRUE : FALSE );
+			$proxyHost = trim($GLOBALS['TYPO3_CONF_VARS']['HTTP']['proxy_host']);
+			$proxyPort = trim($GLOBALS['TYPO3_CONF_VARS']['HTTP']['proxy_port']);
+			$proxyUser = trim($GLOBALS['TYPO3_CONF_VARS']['HTTP']['proxy_user']);
+			$proxyPassword = trim($GLOBALS['TYPO3_CONF_VARS']['HTTP']['proxy_password']);
+			$curlProxyServer = $proxyHost . ( trim($proxyPort) != '' ? ':' . $proxyPort : '');
+			$curlProxyUserPass = $proxyUser . ':' . $proxyPassword;
+			$curlProxyTunnel = '';
 		}
-		if (is_array($postData)) {
-			curl_setopt($ch, CURLOPT_POST, 1);
-			curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+		if ( $useCurl === TRUE ) {
+			$ch = curl_init($url);
+			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, $followRedirects);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+			curl_setopt($ch, CURLOPT_TIMEOUT, $curlTimeout);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $sslVerifyPeer);
+			if ( $curlProxyServer ) {
+				curl_setopt($ch, CURLOPT_PROXY, $curlProxyServer);
+				if ( trim($curlProxyTunnel) != '') {
+					curl_setopt($ch, CURLOPT_HTTPPROXYTUNNEL, $curlProxyTunnel);
+				}
+				if ( trim($curlProxyUserPass) != '' ) {
+					curl_setopt($ch, CURLOPT_PROXYUSERPWD, $curlProxyUserPass);
+				}
+			}
+			if (is_array($postData)) {
+				curl_setopt($ch, CURLOPT_POST, 1);
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+			}
+			print_r($postData);
+			$response = curl_exec($ch);
+
+			// make sure we got a real response
+			if (strlen($response) == 0) {
+				$errno = curl_errno($ch);
+				$error = curl_error($ch);
+				throw new Tx_HipChat_Exception(self::STATUS_BAD_RESPONSE,
+					'CURL error: ' . $errno . '-' . $error, NULL, $url);
+			}
+
+			// make sure we got a 200
+			$code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+			if ($code != self::STATUS_OK) {
+				throw new Tx_HipChat_Exception(
+					$code, 'HTTP status code: ' . $code . ', response=' . $response, NULL, $url);
+			}
+
+			curl_close($ch);
+		} else {
+			throw new Tx_HipChat_Exception(
+				self::STATUS_BAD_RESPONSE,
+				'CURL is disabled in TYPO3 install tool. You must enable CURL to send HipChat notifications.',
+				NULL,
+				NULL
+			);
 		}
-		$response = curl_exec($ch);
-
-		// make sure we got a real response
-		if (strlen($response) == 0) {
-			$errno = curl_errno($ch);
-			$error = curl_error($ch);
-			throw new Tx_HipChat_Exception(self::STATUS_BAD_RESPONSE,
-				'CURL error: ' . $errno . '-' . $error, NULL, $url);
-		}
-
-		// make sure we got a 200
-		$code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-		if ($code != self::STATUS_OK) {
-			throw new Tx_HipChat_Exception($code,
-				'HTTP status code: ' . $code . ', response=' . $response, NULL, $url);
-		}
-
-		curl_close($ch);
-
 		return $response;
 	}
 
@@ -529,13 +595,13 @@ class Tx_HipChat {
 	 * Make an API request using curl
 	 *
 	 * @param string $apiMethod  Which API method to hit, like 'rooms/show'.
-	 * @param array  $args        Data to send.
+	 * @param array  $args       Data to send.
 	 * @param string $httpMethod HTTP method (GET or POST).
 	 *
 	 * @throws Tx_HipChat_Exception
 	 * @return mixed
 	 */
-	public function makeRequest($apiMethod, $args = array(), $httpMethod = 'GET') {
+	private function makeRequest($apiMethod, $args = array(), $httpMethod = 'GET') {
 		$response = FALSE;
 		if ($this->isConfigured === TRUE) {
 			$args['format'] = 'json';
@@ -551,7 +617,7 @@ class Tx_HipChat {
 			}
 
 			try {
-				$response = $this->curlRequest($url, $postData);
+				$response = $this->hipChatRequest($url, $postData);
 
 				// make sure response is valid json
 				$response = json_decode($response);
@@ -586,17 +652,6 @@ class Tx_HipChat {
 		return $this->verifySsl;
 	}
 
-	/**
-	 * Set an outbound proxy to use as a curl option
-	 * To disable proxy usage, set $proxy to null
-	 *
-	 * @param string $proxy
-	 * @return void
-	 */
-	public function setProxy($proxy) {
-		$this->proxy = $proxy;
-	}
-
 }
 
 /**
@@ -605,7 +660,8 @@ class Tx_HipChat {
 class Tx_HipChat_Exception extends \Exception {
 
 	/**
-	 * @var
+	 * Numeric error code
+	 * @var Integer
 	 */
 	public $code;
 
@@ -616,7 +672,16 @@ class Tx_HipChat_Exception extends \Exception {
 	 * @param String $url
 	 */
 	public function __construct($code, $info, $exception, $url) {
-		$message = 'HipChat API error: code=' . $code . ', info=' . $info . ', url=' . $url;
+		$message = 'HipChat API error: ';
+		if ( $code > 0 ) {
+			$message .= 'code=' . $code . ' ';
+		}
+		if ( $info != '' ) {
+			$message .= 'info=' . $info . ' ';
+		}
+		if ( $url != '' ) {
+			$message .= 'url=' . $url;
+		}
 		parent::__construct($message, (int)$code);
 	}
 }

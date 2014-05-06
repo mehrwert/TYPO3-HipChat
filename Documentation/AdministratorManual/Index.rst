@@ -32,7 +32,9 @@ To create a token, sign in in on the HipChat site, navigate to »Group Admin« >
 
 			Create Token Form for HipChat API
 
-A notification (1) token is sufficient in the current version of this extension. Use any token label (2) you like.
+.. tip:: A notification (1) token is sufficient in the current version of this extension.
+
+Use any token label (2) you like.
 
 Manage Tokens
 ^^^^^^^^^^^^^
@@ -42,10 +44,14 @@ If the token has been created successfully, you should see it in the list view o
 	:width: 800px
 	:alt: Token Overview
 
+	HipChat Token overview
+
 Install and configure HipChat extension
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Now install the extension and fill in the token value (1) and the room name (2). The room **must** exist
 and the name must be exactly the same as in HipChat. Choose a »from« name. Log out and in to test notifications.
+
+**Note:** The ``hipChatCurlVerifySsl`` setting is for TYPO3 < 6.2 only. In TYPO3 >= 6.2 the Install Tool setting will be taken.
 
 .. figure:: ../Images/AdministratorManual/HipChatExtensionOptions.png
 	:width: 800px
@@ -65,8 +71,7 @@ In the **Notification** tab you may choose the desired way of notification tranm
 Example Notifications
 ---------------------
 
-If everything went right, you should see your logins in our HipChat room.
-
+If everything went right, you should see your logins in your HipChat room.
 
 .. figure:: ../Images/AdministratorManual/HipChatScreenshotLoginNotifications.png
 	:width: 800px
