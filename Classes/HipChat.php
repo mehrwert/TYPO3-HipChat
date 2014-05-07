@@ -542,7 +542,6 @@ class Tx_HipChat {
 				curl_setopt($ch, CURLOPT_POST, 1);
 				curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
 			}
-			print_r($postData);
 			$response = curl_exec($ch);
 
 			// make sure we got a real response

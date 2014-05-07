@@ -24,5 +24,5 @@ Atlassian HipChat provides private group chat and IM services - see https://www.
 ## Version History
 For full history please see ChangeLog.txt.
 
-### Whats new in this release (Version 1.1.2 - 2014-05-06)
-* Add support for curl proxy settings configured in the TYPO3 install tool
+### Whats new in this release (Version 1.1.3 - 2014-05-08)
+* Remove debug code / debug output
